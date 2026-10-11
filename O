@@ -1,84 +1,40 @@
---===== SPY de Remotes - Punch Simulator (Venice) =====
--- Muestra TODO lo que el juego envia/recibe por remotes, con argumentos.
--- 1) Ejecuta  2) Haz a mano: reclamar UGC, abrir huevo, ascender, cofre
--- 3) Manda captura del log
-
-local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+-- Copiar todos los Remotes (Venice)
+local list = {}
+for _, d in ipairs(game:GetDescendants()) do
+    if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
+        table.insert(list, d:GetFullName())
+    end
+end
+local txt = table.concat(list, "\n")
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "VeniceSpy"; gui.ResetOnSpawn = false; gui.DisplayOrder = 999
-gui.Parent = LP:WaitForChild("PlayerGui")
+gui.Name = "VeniceCopy"; gui.ResetOnSpawn = false; gui.DisplayOrder = 999
+gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
 local f = Instance.new("Frame")
-f.Size = UDim2.new(0,330,0,410); f.Position = UDim2.new(0.5,-165,0.5,-205)
-f.BackgroundColor3 = Color3.fromRGB(10,10,14); f.BorderSizePixel = 0; f.Parent = gui
+f.Size = UDim2.new(0,340,0,420); f.Position = UDim2.new(0.5,-170,0.5,-210)
+f.BackgroundColor3 = Color3.fromRGB(12,12,16); f.BorderSizePixel = 0; f.Parent = gui
 Instance.new("UICorner", f).CornerRadius = UDim.new(0,10)
 
-local h = Instance.new("TextLabel")
-h.Size = UDim2.new(1,0,0,34); h.BackgroundTransparency = 1
-h.Text = "SPY Remotes (Venice)"; h.TextColor3 = Color3.new(1,1,1)
-h.Font = Enum.Font.GothamBold; h.TextSize = 14; h.Parent = f
+local box = Instance.new("TextBox")
+box.Size = UDim2.new(1,-16,1,-96); box.Position = UDim2.new(0,8,0,8)
+box.BackgroundColor3 = Color3.fromRGB(20,20,26); box.TextColor3 = Color3.fromRGB(180,255,200)
+box.Font = Enum.Font.Code; box.TextSize = 11; box.TextXAlignment = Enum.TextXAlignment.Left
+box.TextYAlignment = Enum.TextYAlignment.Top; box.TextWrapped = true
+box.ClearTextOnFocus = false; box.MultiLine = true
+box.Text = txt; box.Parent = f
+Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
 
-local sf = Instance.new("ScrollingFrame")
-sf.Size = UDim2.new(1,-16,1,-84); sf.Position = UDim2.new(0,8,0,38)
-sf.BackgroundTransparency = 1; sf.ScrollBarThickness = 4
-sf.CanvasSize = UDim2.new(0,0,0,0); sf.AutomaticCanvasSize = Enum.AutomaticSize.Y; sf.Parent = f
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1,-16,0,40); btn.Position = UDim2.new(0,8,1,-52)
+btn.BackgroundColor3 = Color3.fromRGB(40,150,90); btn.Text = "COPIAR TODO"
+btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.GothamBold; btn.TextSize = 15
+btn.Parent = f
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
 
-local lbl = Instance.new("TextLabel")
-lbl.Size = UDim2.new(1,-8,0,0); lbl.BackgroundTransparency = 1
-lbl.Text = ""; lbl.TextColor3 = Color3.fromRGB(180,255,200)
-lbl.Font = Enum.Font.Code; lbl.TextSize = 11
-lbl.TextXAlignment = Enum.TextXAlignment.Left
-lbl.TextYAlignment = Enum.TextYAlignment.Top
-lbl.AutomaticSize = Enum.AutomaticSize.Y; lbl.Parent = sf
-
-local lines = {}
-local function log(s)
-    table.insert(lines, s)
-    if #lines > 80 then table.remove(lines, 1) end
-    lbl.Text = table.concat(lines, "\n")
-    sf.CanvasPosition = Vector2.new(0, 1e9)
-    print("[SPY] "..s)
-end
-
-local function fmt(...)
-    local n = select("#", ...); local t = {}
-    for i = 1, n do
-        local v = select(i, ...); local ty = typeof(v)
-        if ty == "string" then t[i] = '"'..v..'"'
-        elseif ty == "number" or ty == "boolean" then t[i] = tostring(v)
-        else t[i] = "<"..ty..">" end
-    end
-    return table.concat(t, ", ")
-end
-
--- Servidor -> Cliente
-for _, d in ipairs(game:GetDescendants()) do
-    if d:IsA("RemoteEvent") then
-        d.OnClientEvent:Connect(function(...)
-            log("RECV "..d.Name.."  ("..fmt(...)..")")
-        end)
-    end
-end
-
--- Cliente -> Servidor (hook)
-pcall(function()
-    local oldFire
-    oldFire = hookfunction(Instance.new("RemoteEvent").FireServer, newcclosure(function(self, ...)
-        log("FIRE "..self.Name.."  ("..fmt(...)..")")
-        return oldFire(self, ...)
-    end))
+btn.MouseButton1Click:Connect(function()
+    local copiar = setclipboard or toclipboard or writeclipboard
+    if copiar then copiar(txt) end
+    btn.Text = "COPIADO ✓"
+    task.delay(1.5, function() btn.Text = "COPIAR TODO" end)
 end)
-
-local clr = Instance.new("TextButton")
-clr.Size = UDim2.new(1,-16,0,30); clr.Position = UDim2.new(0,8,1,-38)
-clr.BackgroundColor3 = Color3.fromRGB(160,50,50); clr.Text = "LIMPIAR"
-clr.TextColor3 = Color3.new(1,1,1); clr.Font = Enum.Font.GothamBold; clr.Parent = f
-clr.MouseButton1Click:Connect(function() lines = {}; lbl.Text = "" end)
-
-log("Listo. Ahora haz A MANO:")
-log("1) Reclama el UGC")
-log("2) Abre un huevo")
-log("3) Ascende y abre un cofre")
-log("y mandame la captura de lo que sale.")
