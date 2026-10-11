@@ -1,76 +1,104 @@
--- ===== DUMP Punch Simulator (Venice) =====
--- Lista remotes y botones reales y los copia
-local out = {}
+-- ===== DUMP Punch Simulator (Venice) v2 blindado =====
+print("[Venice] ejecutando dump...")
 
-for _, d in ipairs(game:GetDescendants()) do
-    if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
-        table.insert(out, d.ClassName .. "  >>  " .. d:GetFullName())
-    end
-end
-table.sort(out)
+local ok, err = pcall(function()
+    local Players = game:GetService("Players")
+    local LP = Players.LocalPlayer
 
-local pg = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-if pg then
-    for _, d in ipairs(pg:GetDescendants()) do
-        if d:IsA("TextButton") or d:IsA("ImageButton") then
-            table.insert(out, "BTN  >>  " .. d:GetFullName() .. "  ("..(d.Text or "")..")")
+    local out = {}
+
+    for _, d in ipairs(game:GetDescendants()) do
+        if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
+            table.insert(out, d.ClassName .. "  >>  " .. d:GetFullName())
         end
     end
-end
+    table.sort(out)
 
-local text = table.concat(out, "\n")
-print("===== DUMP VENICE =====\n" .. text)
+    local pg = LP:FindFirstChild("PlayerGui")
+    if pg then
+        for _, d in ipairs(pg:GetDescendants()) do
+            if d:IsA("TextButton") or d:IsA("ImageButton") then
+                table.insert(out, "BTN  >>  " .. d:GetFullName() .. "  ("..(d.Text or "")..")")
+            end
+        end
+    end
 
-if setclipboard then pcall(setclipboard, text) end
+    if #out == 0 then out = {"(vacio - no encontro remotes)"} end
+    local text = table.concat(out, "\n")
+    print("[Venice] items:", #out)
+    print("===== DUMP VENICE =====\n" .. text)
 
-local gui = Instance.new("ScreenGui")
-gui.ResetOnSpawn = false
-gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-local f = Instance.new("Frame")
-f.Size = UDim2.new(0,330,0,430)
-f.Position = UDim2.new(0.5,-165,0.5,-215)
-f.BackgroundColor3 = Color3.fromRGB(12,12,16)
-f.Parent = gui
-Instance.new("UICorner", f).CornerRadius = UDim.new(0,10)
-
-local sf = Instance.new("ScrollingFrame")
-sf.Size = UDim2.new(1,-16,1,-90)
-sf.Position = UDim2.new(0,8,0,44)
-sf.BackgroundTransparency = 1
-sf.ScrollBarThickness = 4
-sf.CanvasSize = UDim2.new(0,0,0, #out*17+20)
-sf.Parent = f
-
-local lbl = Instance.new("TextLabel")
-lbl.Size = UDim2.new(1,-8,0,#out*17+20)
-lbl.BackgroundTransparency = 1
-lbl.Text = text
-lbl.TextColor3 = Color3.fromRGB(180,255,200)
-lbl.Font = Enum.Font.Code
-lbl.TextSize = 11
-lbl.TextXAlignment = Enum.TextXAlignment.Left
-lbl.TextYAlignment = Enum.TextYAlignment.Top
-lbl.Parent = sf
-
-local h = Instance.new("TextLabel")
-h.Size = UDim2.new(1,0,0,40)
-h.BackgroundTransparency = 1
-h.Text = "DUMP ("..#out.." items)"
-h.TextColor3 = Color3.new(1,1,1)
-h.Font = Enum.Font.GothamBold
-h.TextSize = 14
-h.Parent = f
-
-local copy = Instance.new("TextButton")
-copy.Size = UDim2.new(1,-16,0,36)
-copy.Position = UDim2.new(0,8,1,-42)
-copy.BackgroundColor3 = Color3.fromRGB(0,140,90)
-copy.Text = "COPIAR TODO"
-copy.TextColor3 = Color3.new(1,1,1)
-copy.Font = Enum.Font.GothamBold
-copy.Parent = f
-copy.MouseButton1Click:Connect(function()
     if setclipboard then pcall(setclipboard, text) end
-    copy.Text = "COPIADO! pegalo en el chat"
+    if writeclipboard then pcall(writeclipboard, text) end
+
+    local parent = LP:FindFirstChild("PlayerGui") or game:GetService("CoreGui")
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "VeniceDump"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.DisplayOrder = 999
+    gui.Parent = parent
+
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(0,330,0,430)
+    f.Position = UDim2.new(0.5,-165,0.5,-215)
+    f.BackgroundColor3 = Color3.fromRGB(12,12,16)
+    f.BorderSizePixel = 0
+    f.Parent = gui
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,10)
+
+    local h = Instance.new("TextLabel")
+    h.Size = UDim2.new(1,0,0,40)
+    h.BackgroundTransparency = 1
+    h.Text = "DUMP ("..#out.." items)"
+    h.TextColor3 = Color3.new(1,1,1)
+    h.Font = Enum.Font.GothamBold
+    h.TextSize = 14
+    h.Parent = f
+
+    local sf = Instance.new("ScrollingFrame")
+    sf.Size = UDim2.new(1,-16,1,-90)
+    sf.Position = UDim2.new(0,8,0,44)
+    sf.BackgroundTransparency = 1
+    sf.ScrollBarThickness = 4
+    sf.CanvasSize = UDim2.new(0,0,0,#out*17+20)
+    sf.Parent = f
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,-8,0,#out*17+20)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(180,255,200)
+    lbl.Font = Enum.Font.Code
+    lbl.TextSize = 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextYAlignment = Enum.TextYAlignment.Top
+    lbl.Parent = sf
+
+    local copy = Instance.new("TextButton")
+    copy.Size = UDim2.new(1,-16,0,36)
+    copy.Position = UDim2.new(0,8,1,-42)
+    copy.BackgroundColor3 = Color3.fromRGB(0,140,90)
+    copy.Text = "COPIAR TODO"
+    copy.TextColor3 = Color3.new(1,1,1)
+    copy.Font = Enum.Font.GothamBold
+    copy.Parent = f
+    copy.MouseButton1Click:Connect(function()
+        if setclipboard then pcall(setclipboard, text) end
+        copy.Text = "COPIADO!"
+    end)
 end)
+
+if not ok then
+    print("[Venice] ERROR: " .. tostring(err))
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification",
+            {Title="Venice Dump", Text="ERROR: "..tostring(err), Duration=8})
+    end)
+else
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification",
+            {Title="Venice Dump", Text="Listo, revisa la ventana", Duration=5})
+    end)
+end
